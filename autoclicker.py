@@ -2,23 +2,17 @@
 """
 Simple Python Autoclicker with hotkey toggle
 """
+import json
 import time
+from pathlib import Path
+
 from pynput.mouse import Controller, Button
 from pynput.keyboard import Listener, Key
 
 # ==================== CONFIGURATION ====================
 # Click location (x, y) - change these to your desired coordinates
-# Split layout
-# ABILITY_1_POS = (160, 1200)
-# ABILITY_2_POS = (400, 1200)
-# ABILITY_3_POS = (640, 1200)
-# ABILITY_4_POS = (880, 1200)
-# ABILITY_5_POS = (1120, 1200)
-# 
-# CLICK_X = 690
-# CLICK_Y = 780
 
-# Fullscreen layout
+# Default layout
 ABILITY_1_POS = (1125, 650)
 ABILITY_2_POS = (1125, 825)
 ABILITY_3_POS = (1125, 1000)
@@ -28,7 +22,6 @@ ABILITY_5_POS = (1125, 1350)
 CLICK_POS_MOB = (2500, 650)
 CLICK_POS_EGG = (1885, 750)
 CLICK_POS_COLLECT = (1885, 1125)
-# CLICK_POS_POTTATO = (1500, 650)
 
 # Click interval (milliseconds) - time between each click
 CLICK_INTERVAL = 10
@@ -41,6 +34,52 @@ ABILITY_INTERVAL = 10000
 TOGGLE_KEY = Key.caps_lock
 
 # ==================== END CONFIGURATION ====================
+
+CONFIG_PATH = Path(__file__).parent / "click_config.json"
+
+
+def _to_position(value, default):
+    """Validate and normalize [x, y] values from config."""
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return default
+
+    try:
+        return (int(value[0]), int(value[1]))
+    except (TypeError, ValueError):
+        return default
+
+
+def load_click_positions_from_config():
+    """Load optional coordinate overrides from click_config.json."""
+    global ABILITY_1_POS, ABILITY_2_POS, ABILITY_3_POS, ABILITY_4_POS, ABILITY_5_POS
+    global CLICK_POS_MOB, CLICK_POS_EGG, CLICK_POS_COLLECT
+
+    if not CONFIG_PATH.exists():
+        print(f"No config file found at {CONFIG_PATH}. Using defaults.")
+        return
+
+    try:
+        with CONFIG_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Failed to read config file ({exc}). Using defaults.")
+        return
+
+    positions = data.get("positions", {})
+    if not isinstance(positions, dict):
+        print("Invalid config format: 'positions' should be an object. Using defaults.")
+        return
+
+    ABILITY_1_POS = _to_position(positions.get("ABILITY_1_POS"), ABILITY_1_POS)
+    ABILITY_2_POS = _to_position(positions.get("ABILITY_2_POS"), ABILITY_2_POS)
+    ABILITY_3_POS = _to_position(positions.get("ABILITY_3_POS"), ABILITY_3_POS)
+    ABILITY_4_POS = _to_position(positions.get("ABILITY_4_POS"), ABILITY_4_POS)
+    ABILITY_5_POS = _to_position(positions.get("ABILITY_5_POS"), ABILITY_5_POS)
+    CLICK_POS_MOB = _to_position(positions.get("CLICK_POS_MOB"), CLICK_POS_MOB)
+    CLICK_POS_EGG = _to_position(positions.get("CLICK_POS_EGG"), CLICK_POS_EGG)
+    CLICK_POS_COLLECT = _to_position(positions.get("CLICK_POS_COLLECT"), CLICK_POS_COLLECT)
+
+    print(f"Loaded coordinate config from {CONFIG_PATH}.")
 
 mouse = Controller()
 is_clicking = False
@@ -134,4 +173,5 @@ def clicker_loop():
             print("\nAutoclicker stopped by user.")
 
 if __name__ == "__main__":
+    load_click_positions_from_config()
     clicker_loop()

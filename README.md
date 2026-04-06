@@ -5,6 +5,7 @@ A simple Python autoclicker with hotkey toggle support.
 ## Features
 
 - **Customizable click location** - Set any X/Y coordinates
+- **Optional config file** - Auto-loads positions from `click_config.json` if present
 - **Hotkey toggle** - Enable/disable with a single key press (default: Caps Lock)
 - **Adjustable click speed** - Control the interval between clicks
 - **Coordinate finder helper** - Utility to find mouse coordinates easily
@@ -22,17 +23,38 @@ pip install -r requirements.txt
 ```bash
 python find_coordinates.py
 ```
-Move your mouse to the location you want to click, note the coordinates, then press ESC.
+Move your mouse and use these keys to capture positions:
 
-### Step 2: Configure autoclicker.py
+- `m` = mob click position
+- `e` = egg click position
+- `c` = collect click position
+- `1` to `5` = ability positions
+- `o` = default/open chest position
+- `b` = buy position
+- `r` = refill position
+- `h` = claim chest position
+- `s` = save captured coordinates to `click_config.json`
+- `ESC` = exit
+
+If `click_config.json` exists, both `autoclicker.py` and `auto_shop_chest_farm.py` will load it automatically.
+
+### Step 2: Configure autoclicker.py (optional)
 Open `autoclicker.py` and update the configuration section:
 
 ```python
-CLICK_X = 500        # Your X coordinate
-CLICK_Y = 500        # Your Y coordinate
-CLICK_INTERVAL = 0.1 # Time between clicks (seconds)
+CLICK_POS_MOB = (2500, 650)
+CLICK_POS_EGG = (1885, 750)
+CLICK_POS_COLLECT = (1885, 1125)
+ABILITY_1_POS = (1125, 650)
+ABILITY_2_POS = (1125, 825)
+ABILITY_3_POS = (1125, 1000)
+ABILITY_4_POS = (1125, 1175)
+ABILITY_5_POS = (1125, 1350)
+CLICK_INTERVAL = 10   # Time between each click cycle (milliseconds)
 TOGGLE_KEY = Key.caps_lock  # Key to toggle on/off
 ```
+
+If no `click_config.json` is present, these hardcoded defaults are used.
 
 ### Step 3: Run the autoclicker
 ```bash

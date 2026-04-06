@@ -2,7 +2,10 @@
 """
 Simple Python Autoclicker with hotkey toggle
 """
+import json
 import time
+from pathlib import Path
+
 from pynput.mouse import Controller, Button
 from pynput.keyboard import Listener, Key
 
@@ -22,6 +25,47 @@ CLICK_INTERVAL = 100
 TOGGLE_KEY = Key.caps_lock
 
 # ==================== END CONFIGURATION ====================
+
+CONFIG_PATH = Path(__file__).parent / "click_config.json"
+
+
+def _to_position(value, default):
+    """Validate and normalize [x, y] values from config."""
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        return default
+
+    try:
+        return (int(value[0]), int(value[1]))
+    except (TypeError, ValueError):
+        return default
+
+
+def load_click_positions_from_config():
+    """Load optional coordinate overrides from click_config.json."""
+    global CLICK_POS_DEFAULT, CLICK_POS_BUY, CLICK_POS_REFIL, CLICK_POS_CLAIM
+
+    if not CONFIG_PATH.exists():
+        print(f"No config file found at {CONFIG_PATH}. Using defaults.")
+        return
+
+    try:
+        with CONFIG_PATH.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Failed to read config file ({exc}). Using defaults.")
+        return
+
+    positions = data.get("positions", {})
+    if not isinstance(positions, dict):
+        print("Invalid config format: 'positions' should be an object. Using defaults.")
+        return
+
+    CLICK_POS_DEFAULT = _to_position(positions.get("CLICK_POS_DEFAULT"), CLICK_POS_DEFAULT)
+    CLICK_POS_BUY = _to_position(positions.get("CLICK_POS_BUY"), CLICK_POS_BUY)
+    CLICK_POS_REFIL = _to_position(positions.get("CLICK_POS_REFIL"), CLICK_POS_REFIL)
+    CLICK_POS_CLAIM = _to_position(positions.get("CLICK_POS_CLAIM"), CLICK_POS_CLAIM)
+
+    print(f"Loaded coordinate config from {CONFIG_PATH}.")
 
 mouse = Controller()
 is_clicking = False
@@ -121,4 +165,5 @@ def clicker_loop():
             print("\nAutoclicker stopped by user.")
 
 if __name__ == "__main__":
+    load_click_positions_from_config()
     clicker_loop()
